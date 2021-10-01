@@ -5,21 +5,25 @@
 library(stringr)
 library(igraph)
 library(reshape2)
+library(chron)
 
 # Set working directory
-setwd('G:/My Drive/Graduate School/Research/Projects/KMNPLongTermData/NSF Analyses')
+#setwd('G:/My Drive/Graduate School/Research/Projects/KMNPLongTermData/NSF Analyses')
+setwd('C:/Users/cecil/OneDrive/Desktop/SDC Work')
 
 # Read in data
 socialDataRaw		<- read.csv('All_nonSuppStudent_Social_Data_through_2019_2021_07_09_ML_BL edits for NSFanalysis_Francis duplicates deleted_Jul262021_MLEdits.csv', stringsAsFactors = FALSE)
 matingSeasonStudent 	<- read.csv('studentMatingSeason_BL updates Jul232021_MLEdits.csv', stringsAsFactors = FALSE)
 sleep				<- read.csv('All_Sleep_Tree_Data_Feb2020_corrected BL Sept2_2021_ML.csv', stringsAsFactors = FALSE)
-nn				<- read.csv('Nearest_Neighbor_All_Data_08-02-21WithFocalNumbers.csv', stringsAsFactors = FALSE)
+nn				<- read.csv('focal.scans.nn_tmm_25sep2021.csv', stringsAsFactors = FALSE)
 laura				<- read.csv('Master file of Laura focal activity data.csv', stringsAsFactors = FALSE)
-focalActivity		<- read.csv('Master-Focal-Activity-File_08-02-21.csv', stringsAsFactors = FALSE)
-filemaker			<- read.csv('Instantaneous FileMaker data.csv', stringsAsFactors = FALSE)
-filemakerGroup		<- read.csv('GroupInfoForFileMakerData.csv', stringsAsFactors = FALSE)
+focalActivity		<- read.csv('focal.scans.actv_tmm_25sep2021.csv', stringsAsFactors = FALSE)
+filemaker			<- read.csv('Instantaneous FileMaker data_corrected BL Sept 2021.csv', stringsAsFactors = FALSE)
+#filemakerGroup		<- read.csv('GroupInfoForFileMakerData.csv', stringsAsFactors = FALSE)
 census			<- read.csv('Census_File_Aug25_2020_chest status updated Dec10_2020.csv', stringsAsFactors = FALSE)
 groups			<- read.csv('Compiled Group File with some data deleted for BL analysis_Sept 2021.csv', stringsAsFactors = FALSE)
+nnFocalList			<- read.csv('focal.ids.nn_tmm_25sep2021.csv', stringsAsFactors = FALSE)
+actvFocalList		<- read.csv('focal.ids.actv_tmm_25sep2021.csv', stringsAsFactors = FALSE)
 
 demo				<- read.csv('Copy of life.history.TMM with becca comments about conflicting info Feb10_2021_ML.csv', stringsAsFactors = FALSE)
 demo$Name			<- str_to_title(demo$Name, locale = "en")
@@ -47,6 +51,29 @@ socialDataAllRaw$Receiver	<- gsub('Savannah_baby_2011', 'Savannahbaby2011', soci
 # Remove lines that have non-identified individuals, n=667 removed, n=137769 left
 socialData		<- socialDataAllRaw[socialDataAllRaw$Initiator %in% sifakaNames & socialDataAllRaw$Receiver %in% sifakaNames,]
 socialDataRemoved	<- socialDataAllRaw[!(socialDataAllRaw$Initiator %in% sifakaNames & socialDataAllRaw$Receiver %in% sifakaNames),]
+
+#############################################
+### Create focal list for filemaker data ####
+#############################################
+filemakerFocalList	<- data.frame()
+groupsToAddToFilemaker  <- groups[,1:3]
+filemakerWithRealGroup	<- merge(filemaker,groupsToAddToFilemaker,by.x = c('Focal','Date'),by.y = c('animal','date'))
+colnames(filemakerWithRealGroup)[23]	<- 'realGroup'
+
+for(i in unique(filemaker$ObsID)){
+	subset	<- filemakerWithRealGroup[filemakerWithRealGroup$ObsID == i & is.na(filemakerWithRealGroup$ObsID)==FALSE,]
+	observer	<- unique(subset$Observer)
+      group       <- unique(subset$realGroup)
+      date        <- unique(subset$Date)
+      focal	      <- unique(subset$Focal)
+      nScan		<- length(unique(subset$ScanTime))
+      stopTime	<- max(unique(subset$ScanTime))
+      scanTime	<- min(unique(subset$ScanTime))
+	startTime	<- format(as.POSIXlt(scanTime, format = "%H:%M:%S")- 10*60,"%H:%M:%S")
+	newline	<- cbind.data.frame(i,observer,date,group,focal,startTime,stopTime,nScan)
+	filemakerFocalList	<- rbind.data.frame(filemakerFocalList,newline)
+      
+}
 
 ####################################
 ### Seperate behavioral datasets ###
