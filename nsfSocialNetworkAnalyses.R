@@ -18,7 +18,7 @@ sleep				<- read.csv('All_Sleep_Tree_Data_Feb2020_corrected BL Sept2_2021_ML.csv
 nn				<- read.csv('focal.scans.nn_tmm_25sep2021.csv', stringsAsFactors = FALSE)
 laura				<- read.csv('Master file of Laura focal activity data.csv', stringsAsFactors = FALSE)
 focalActivity		<- read.csv('focal.scans.actv_tmm_25sep2021.csv', stringsAsFactors = FALSE)
-filemaker			<- read.csv('Instantaneous FileMaker data_corrected BL Sept 2021.csv', stringsAsFactors = FALSE)
+filemaker			<- read.csv('Instantaneous FileMaker data_corrected BL Sept 2021_MLOct2021.csv', stringsAsFactors = FALSE)
 #filemakerGroup		<- read.csv('GroupInfoForFileMakerData.csv', stringsAsFactors = FALSE)
 census			<- read.csv('Census_File_Aug25_2020_chest status updated Dec10_2020.csv', stringsAsFactors = FALSE)
 groups			<- read.csv('Compiled Group File with some data deleted for BL analysis_Sept 2021.csv', stringsAsFactors = FALSE)
@@ -60,7 +60,7 @@ groupsToAddToFilemaker  <- groups[,1:3]
 filemakerWithRealGroup	<- merge(filemaker,groupsToAddToFilemaker,by.x = c('Focal','Date'),by.y = c('animal','date'))
 colnames(filemakerWithRealGroup)[23]	<- 'realGroup'
 
-for(i in unique(filemaker$ObsID)){
+for(i in unique(filemakerWithRealGroup$ObsID)){
 	subset	<- filemakerWithRealGroup[filemakerWithRealGroup$ObsID == i & is.na(filemakerWithRealGroup$ObsID)==FALSE,]
 	observer	<- unique(subset$Observer)
       group       <- unique(subset$realGroup)
@@ -75,6 +75,24 @@ for(i in unique(filemaker$ObsID)){
       
 }
 
+colnames(filemakerFocalList)	<- colnames(nnFocalList)
+
+######################################################
+### Combine Focal Lists and Create Observation MAT ###
+######################################################
+fullFocalList	<- rbind.data.frame(filemakerFocalList, nnFocalList, actvFocalList, stringsAsFactors = FALSE)
+fullFocalList	<- fullFocalList[order(fullFocalList$date, fullFocalList$start_time),]
+
+uniqueDays		<- unique(groups$date)
+for(i in uniqueDays) {
+	groupsObserved	<- unique(groups[groups$date == i, "group"])
+      for(j in groupsObserved) {
+		subsetFocalList	<- fullFocalList[fullFocalList$date ==  i & fullFocalList$group == j,]
+		if(dim(subsetFocalList)[1] == 0){
+			next
+		}
+	}
+}
 ####################################
 ### Seperate behavioral datasets ###
 ####################################
