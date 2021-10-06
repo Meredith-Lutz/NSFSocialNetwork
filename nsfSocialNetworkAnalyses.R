@@ -84,6 +84,7 @@ fullFocalList	<- rbind.data.frame(filemakerFocalList, nnFocalList, actvFocalList
 fullFocalList	<- fullFocalList[order(fullFocalList$date, fullFocalList$start_time),]
 
 uniqueDays		<- unique(groups$date)
+obsMat		<- 0*as.matrix(table(sifakaNames)%*%t(table(sifakaNames)))
 for(i in uniqueDays) {
 	groupsObserved	<- unique(groups[groups$date == i, "group"])
       for(j in groupsObserved) {
@@ -91,7 +92,15 @@ for(i in uniqueDays) {
 		if(dim(subsetFocalList)[1] == 0){
 			next
 		}
+		animalsPresent	<- groups[groups$date == i & groups$group == j, "animal"]
+		for(k in animalsPresent){
+ 			for(m in animalsPresent){
+				focals	<- subsetFocalList[subsetFocalList$focal_animal == k | subsetFocalList$focal_animal == m, ]
+				obsTime	<- 10*sum(focals$number_scans,na.rm = TRUE)
+			}
+		}
 	}
+
 }
 ####################################
 ### Seperate behavioral datasets ###
