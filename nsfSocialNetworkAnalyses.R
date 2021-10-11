@@ -1,6 +1,6 @@
- ############################################
+############################################
 ##### KMNP NSF Social Network Analyses #####
-#####     Last updated by ML 7.8.21    #####
+#####    Last updated by ML 10.11.21   #####
 ############################################
 library(stringr)
 library(igraph)
@@ -22,6 +22,7 @@ filemaker			<- read.csv('Instantaneous FileMaker data_corrected BL Sept 2021_MLO
 #filemakerGroup		<- read.csv('GroupInfoForFileMakerData.csv', stringsAsFactors = FALSE)
 census			<- read.csv('Census_File_Aug25_2020_chest status updated Dec10_2020.csv', stringsAsFactors = FALSE)
 groups			<- read.csv('Compiled Group File with some data deleted for BL analysis_Sept 2021.csv', stringsAsFactors = FALSE)
+#nnFocalList		<- read.csv('G:/My Drive/Graduate School/Research/Projects/KMNPLongTermData/Meredith Corrected KMNP Long Term Data/Cleaned Data/NearestNeighborIDs_TMM_ML_11Oct2021.csv', stringsAsFactors = FALSE)
 nnFocalList			<- read.csv('focal.ids.nn_tmm_25sep2021.csv', stringsAsFactors = FALSE)
 actvFocalList		<- read.csv('focal.ids.actv_tmm_25sep2021.csv', stringsAsFactors = FALSE)
 
@@ -52,9 +53,9 @@ socialDataAllRaw$Receiver	<- gsub('Savannah_baby_2011', 'Savannahbaby2011', soci
 socialData		<- socialDataAllRaw[socialDataAllRaw$Initiator %in% sifakaNames & socialDataAllRaw$Receiver %in% sifakaNames,]
 socialDataRemoved	<- socialDataAllRaw[!(socialDataAllRaw$Initiator %in% sifakaNames & socialDataAllRaw$Receiver %in% sifakaNames),]
 
-#############################################
-### Create focal list for filemaker data ####
-#############################################
+############################################
+### Create focal list for filemaker data ###
+############################################
 filemakerFocalList	<- data.frame()
 groupsToAddToFilemaker  <- groups[,1:3]
 filemakerWithRealGroup	<- merge(filemaker,groupsToAddToFilemaker,by.x = c('Focal','Date'),by.y = c('animal','date'))
@@ -76,6 +77,9 @@ for(i in unique(filemakerWithRealGroup$ObsID)){
 }
 
 colnames(filemakerFocalList)	<- colnames(nnFocalList)
+
+#write.csv(filemakerWithRealGroup[,c(1:8, 23, 10:22)], 'FileMaker_ML_11Oct2021.csv', row.names = FALSE)
+#write.csv(filemakerFocalList, 'FileMakerIDs_ML_11Oct2021.csv', row.names = FALSE)
 
 ######################################################
 ### Combine Focal Lists and Create Observation MAT ###
