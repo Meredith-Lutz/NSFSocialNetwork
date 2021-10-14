@@ -90,9 +90,12 @@ fullFocalList	<- fullFocalList[order(fullFocalList$date, fullFocalList$start_tim
 uniqueDays		<- unique(groups$date)
 obsMat		<- 0*as.matrix(table(sifakaNames)%*%t(table(sifakaNames)))
 for(i in uniqueDays) {
+	print(paste("Starting Day", i))
 	groupsObserved	<- unique(groups[groups$date == i, "group"])
+	print(groupsObserved)
       for(j in groupsObserved) {
 		subsetFocalList	<- fullFocalList[fullFocalList$date ==  i & fullFocalList$group == j,]
+		print(paste(j, "Has", dim(subsetFocalList)[1], "Focals on", i))
 		if(dim(subsetFocalList)[1] == 0){
 			next
 		}
@@ -101,11 +104,13 @@ for(i in uniqueDays) {
  			for(m in animalsPresent){
 				focals	<- subsetFocalList[subsetFocalList$focal_animal == k | subsetFocalList$focal_animal == m, ]
 				obsTime	<- 10*sum(focals$number_scans,na.rm = TRUE)
+				obsMat[rownames(obsMat) == k,colnames(obsMat) == m]	<- obsTime + obsMat[rownames(obsMat) == k,colnames(obsMat) == m]
+				obsMat[rownames(obsMat) == m,colnames(obsMat) == k]	<- obsTime + obsMat[rownames(obsMat) == m,colnames(obsMat) == k]
 			}
 		}
 	}
-
 }
+
 ####################################
 ### Seperate behavioral datasets ###
 ####################################
@@ -123,7 +128,7 @@ socialData$behavCat	<- ifelse(socialData$Behavior == 'Approach_contact' | social
 					ifelse(socialData$Behavior == 'Lunge' | socialData$Behavior == 'Bite' | 
 						socialData$Behavior == 'Chase' | socialData$Behavior == 'Cuff' |
 						socialData$Behavior == 'Nose_jab' | socialData$Behavior == 'Snap_at' |
-						socialData$Behavior == 'Feign_to_cuff', 'agg', NA))))))))))
+						socialData$Behavior == 'Feign_to_cuff', 'agg', NA)))))))))))
 
 #Create mutual grooming that is in both directions
 mgrm			<- socialData[socialData$Behavior == 'Mutual_groom' | socialData$Behavior == 'Mutual Groom [unknown initiator]',]
@@ -161,8 +166,10 @@ allPrxND		<- rbind(cntND, prxND)
 # time (or # of times) that a dyad interacts. The multiple behavior option averages across behaviors, which is
 # not the goal, here, hence we will create a dummy behavioral category variable that lumps all of the relevant behaviors for a net
 # There is more documentation for the function itself in the definition file
-source('G:/My Drive/Graduate School/Research/Projects/TemporalNets/SeasonalNetworkAnalyses/createNetworkFunction.R')
+#source('G:/My Drive/Graduate School/Research/Projects/TemporalNets/SeasonalNetworkAnalyses/createNetworkFunction.R')
+source('C:/Users/cecil/OneDrive/Desktop/SDC Work/Github Work/SeasonalNetworkAnalyses/createNetworkFunction.R')
 
+#playNDMat not working
 playNDMat	<- createNet(playND$Initiator, playND$Receiver, playND$behavCat, 'prx',
 			subjects = sifakaNames, directional = FALSE, type = 'duration', durs = playND$Duration.Seconds)
 grmDMat	<- createNet(grmD$Initiator, grmD$Receiver, grmD$behavCat, 'grm',
