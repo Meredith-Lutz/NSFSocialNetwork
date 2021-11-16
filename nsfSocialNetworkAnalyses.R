@@ -14,19 +14,23 @@ setwd('C:/Users/cecil/OneDrive/Desktop/SDC Work')
 # Read in data
 socialDataRaw		<- read.csv('All_nonSuppStudent_Social_Data_through_2019_2021_07_09_ML_BL edits for NSFanalysis_Francis duplicates deleted_Jul262021_MLEdits.csv', stringsAsFactors = FALSE)
 matingSeasonStudent 	<- read.csv('studentMatingSeason_BL updates Jul232021_MLEdits.csv', stringsAsFactors = FALSE)
+
 sleep				<- read.csv('All_Sleep_Tree_Data_Feb2020_corrected BL Sept2_2021_ML.csv', stringsAsFactors = FALSE)
-nn				<- read.csv('focal.scans.nn_tmm_25sep2021.csv', stringsAsFactors = FALSE)
+
 laura				<- read.csv('Master file of Laura focal activity data.csv', stringsAsFactors = FALSE)
-focalActivity		<- read.csv('focal.scans.actv_tmm_25sep2021.csv', stringsAsFactors = FALSE)
-filemaker			<- read.csv('Instantaneous FileMaker data_corrected BL Sept 2021_MLOct2021.csv', stringsAsFactors = FALSE)
-#filemakerGroup		<- read.csv('GroupInfoForFileMakerData.csv', stringsAsFactors = FALSE)
+nn				<- read.csv('NearestNeighbor_TMM_ML_11Oct2021.csv', stringsAsFactors = FALSE)
+focalActivity		<- read.csv('FocalActivity_TMM_ML_11Oct2021.csv', stringsAsFactors = FALSE)
+filemaker			<- read.csv('FileMaker_ML_11Oct2021.csv', stringsAsFactors = FALSE)
+
 census			<- read.csv('Census_File_Aug25_2020_chest status updated Dec10_2020.csv', stringsAsFactors = FALSE)
-groups			<- read.csv('Compiled Group File with some data deleted for BL analysis_Sept 2021.csv', stringsAsFactors = FALSE)
-#nnFocalList		<- read.csv('G:/My Drive/Graduate School/Research/Projects/KMNPLongTermData/Meredith Corrected KMNP Long Term Data/Cleaned Data/NearestNeighborIDs_TMM_ML_11Oct2021.csv', stringsAsFactors = FALSE)
-nnFocalList			<- read.csv('focal.ids.nn_tmm_25sep2021.csv', stringsAsFactors = FALSE)
-actvFocalList		<- read.csv('focal.ids.actv_tmm_25sep2021.csv', stringsAsFactors = FALSE)
+groups			<- read.csv('Compiled Group File with some data deleted for BL analysis_Nov 3 2021_ML Corrected.csv', stringsAsFactors = FALSE)
+
+nnFocalList			<- read.csv('NearestNeighborIDs_TMM_ML_11Oct2021.csv', stringsAsFactors = FALSE)
+actvFocalList		<- read.csv('FocalActivityIDs_TMM_ML_11Oct2021.csv', stringsAsFactors = FALSE)
+fmFocalList			<- read.csv('FileMakerIDs_ML_11Oct2021.csv', stringsAsFactors = FALSE)
 
 demo				<- read.csv('Copy of life.history.TMM with becca comments about conflicting info Feb10_2021_ML.csv', stringsAsFactors = FALSE)
+
 demo$Name			<- str_to_title(demo$Name, locale = "en")
 demo$Sex			<- ifelse(demo$Sex == '', 'unknown', as.character(demo$Sex))
 sifakaNames			<- demo$Name
@@ -84,32 +88,52 @@ colnames(filemakerFocalList)	<- colnames(nnFocalList)
 ######################################################
 ### Combine Focal Lists and Create Observation MAT ###
 ######################################################
-fullFocalList	<- rbind.data.frame(filemakerFocalList, nnFocalList, actvFocalList, stringsAsFactors = FALSE)
+fullFocalList	<- rbind.data.frame(fmFocalList, nnFocalList, actvFocalList, stringsAsFactors = FALSE)
 fullFocalList	<- fullFocalList[order(fullFocalList$date, fullFocalList$start_time),]
 
-uniqueDays		<- unique(groups$date)
-obsMat		<- 0*as.matrix(table(sifakaNames)%*%t(table(sifakaNames)))
-for(i in uniqueDays) {
-	print(paste("Starting Day", i))
-	groupsObserved	<- unique(groups[groups$date == i, "group"])
-	print(groupsObserved)
-      for(j in groupsObserved) {
-		subsetFocalList	<- fullFocalList[fullFocalList$date ==  i & fullFocalList$group == j,]
-		print(paste(j, "Has", dim(subsetFocalList)[1], "Focals on", i))
-		if(dim(subsetFocalList)[1] == 0){
-			next
-		}
-		animalsPresent	<- groups[groups$date == i & groups$group == j, "animal"]
-		for(k in animalsPresent){
- 			for(m in animalsPresent){
-				focals	<- subsetFocalList[subsetFocalList$focal_animal == k | subsetFocalList$focal_animal == m, ]
-				obsTime	<- 10*sum(focals$number_scans,na.rm = TRUE)
-				obsMat[rownames(obsMat) == k,colnames(obsMat) == m]	<- obsTime + obsMat[rownames(obsMat) == k,colnames(obsMat) == m]
-				obsMat[rownames(obsMat) == m,colnames(obsMat) == k]	<- obsTime + obsMat[rownames(obsMat) == m,colnames(obsMat) == k]
+calculateObservationMatrix	<- function(focalList, groupsFile, startDate, endDate, animals){
+	focalListDateSubset	<- focalList[as.Date(focalList$date) >= as.Date(startDate) & as.Date(focalList$date) <= endDate,]
+	focalListSubset		<- focalListDateSubset[focalListDateSubset$focal_animal %in% animals,]
+	
+	obsMat		<- 0*as.matrix(table(animals)%*%t(table(animals)))
+	
+	uniqueDays		<- unique(groupsFile$date)
+	for(i in uniqueDays){
+		print(paste("Starting Day", i))
+		groupsObserved	<- unique(groupsFile[groupsFile$date == i, "group"])
+		#print(groupsObserved)
+     		for(j in groupsObserved){
+			finalSubset	<- focalListSubset[focalListSubset$date ==  i & focalListSubset$group == j,]
+			#print(paste(j, "Has", dim(subsetFocalList)[1], "Focals on", i))
+			if(dim(finalSubset)[1] == 0){
+				next
+			}
+			animalsPresent	<- groupsFile[groupsFile$date == i & groupsFile$group == j, "animal"]
+			for(k in animalsPresent){
+ 				for(m in animalsPresent){
+					focals	<- finalSubset[finalSubset$focal_animal == k | finalSubset$focal_animal == m, ]
+					obsTime	<- 10*sum(focals$number_scans,na.rm = TRUE)
+					obsMat[rownames(obsMat) == k, colnames(obsMat) == m]	<- obsTime + obsMat[rownames(obsMat) == k, colnames(obsMat) == m]
+					obsMat[rownames(obsMat) == m, colnames(obsMat) == k]	<- obsTime + obsMat[rownames(obsMat) == m, colnames(obsMat) == k]
+				}
 			}
 		}
 	}
+	return(obsMat)
 }
+
+calculateObservationMatrix(fullFocalList, groups, '2008-01-01', '2020-12-31', sifakaNames)
+
+calculateObservationTimes	<- function(focalList, startDate, endDate, animals){
+	focalListDateSubset	<- focalList[as.Date(focalList$date) >= as.Date(startDate) & as.Date(focalList$date) <= endDate,]
+	focalListSubset		<- focalListDateSubset[focalListDateSubset$focal_animal %in% animals,]
+	nScans			<- aggregate(focalListSubset$number_scans, by = list(focalListSubset$focal_animal), FUN = sum)
+	colnames(nScans)		<- c('focal_animal', 'number_scans')
+	nScans$nMin			<- nScans$number_scans * 10
+	return(nScans)
+}
+
+calculateObservationTimes(fullFocalList, '2008-01-01', '2020-12-31', sifakaNames)
 
 ####################################
 ### Seperate behavioral datasets ###
@@ -169,8 +193,7 @@ allPrxND		<- rbind(cntND, prxND)
 #source('G:/My Drive/Graduate School/Research/Projects/TemporalNets/SeasonalNetworkAnalyses/createNetworkFunction.R')
 source('C:/Users/cecil/OneDrive/Desktop/SDC Work/Github Work/SeasonalNetworkAnalyses/createNetworkFunction.R')
 
-#playNDMat not working
-playNDMat	<- createNet(playND$Initiator, playND$Receiver, playND$behavCat, 'prx',
+playNDMat	<- createNet(playND$Initiator, playND$Receiver, playND$behavCat, 'ply',
 			subjects = sifakaNames, directional = FALSE, type = 'duration', durs = playND$Duration.Seconds)
 grmDMat	<- createNet(grmD$Initiator, grmD$Receiver, grmD$behavCat, 'grm',
 			subjects = sifakaNames, directional = TRUE, type = 'duration', durs = grmD$Duration.Seconds)
@@ -217,9 +240,9 @@ itgDNet		<- graph_from_adjacency_matrix(itgDMat, mode = 'directed', weighted = T
 suppDNet		<- graph_from_adjacency_matrix(suppDMat, mode = 'directed', weighted = TRUE)
 aggDNet		<- graph_from_adjacency_matrix(aggDMat, mode = 'directed', weighted = TRUE)
 
-#####################################
-### Sleeping network calculations ###
-#####################################
+#########################################
+##### Sleeping network calculations #####
+#########################################
 
 #Modified based on Damien's code + my original edits
 
@@ -299,7 +322,7 @@ sleepBallNet <- function(data, begin = "2011-01-01", end = "2019-12-31", dawn_du
 	return(list(adjacency.matrix = ans.adj, nb.contacts = ans.nb.contacts, nb.scans.together = ans.denominator))
 }
 
-sleepTreeNet <- function(data, begin = "2011-01-01", end = "2019-12-31", dawn_dusk = "dawn_dusk", date_format = "%Y-%m-%d"){
+sleepTreeNet <- function(data, begin = "2011-01-01", end = "2019-12-31", dawn_dusk = "dawn_dusk", date_format = "%Y-%m-%d", animals){
 		dat	<- data
 	
 		#Subset for given dates
@@ -373,7 +396,7 @@ sleepTreeNet <- function(data, begin = "2011-01-01", end = "2019-12-31", dawn_du
 	return(list(adjacency.matrix = ans.adj, nb.contacts = ans.nb.contacts, nb.scans.together = ans.denominator))
 }
 
-sleep		<- merge(sleep, groups, by.x = c('Date', 'ID'), by.y = c('date', 'animal'), all.x = TRUE)
+sleep			<- merge(sleep, groups, by.x = c('Date', 'ID'), by.y = c('date', 'animal'), all.x = TRUE)
 sleep$season	<- ifelse(sleep$Month == 'Jan' | sleep$Month == 'Feb' | sleep$Month == 'Mar' , 'mating',
 				ifelse(sleep$Month == 'Jul' | sleep$Month == 'Aug' | sleep$Month == 'Sep', 'birthing', 'other'))  
 #Clean up names
@@ -386,6 +409,10 @@ sleep			<- sleep[sleep$ID %in% sifakaNames,]
 #Remove a few problem lines that are duplicated across observer
 sleep		<- sleep[sleep$Individual.Repeat != 'Y',]
 sleep		<- sleep[sleep$Observation.Duplicated == '' | (sleep$Observation.Duplicated == 'Y' & sleep$Observer == sleep$Observer.Kept),]
+
+###############################
+### Seasonal sleep analyses ###
+###############################
 
 #Seperate out datasets
 sleepMatingSeason		<- sleep[sleep$season == 'mating',]
@@ -709,6 +736,81 @@ for(i in groups){
 	plot.igraph(ballNetsAM[[4]], main = paste('Group', i, 'Birthing'), layout = layBirthing, vertex.size = 25, vertex.label.color = sexBirthingVertexLabelCol, vertex.color = sexBirthing, edge.width = E(ballNetsAM[[4]])$weight*5)
 	dev.off()
 }
+
+#############################
+### Yearly sleep networks ###
+#############################
+yearlySleepNets	<- function(sleepData, typeOfYear, group, years){
+	sleepDataSubset	<- sleepData[sleepData$Focal.Group == group,]
+	sleepNets		<- list()
+	if(typeOfYear == 'calendar'){
+		startDates	<- paste(years, "-01-01", sep = '')
+		endDates	<- paste(years, "-12-31", sep = '')
+	}
+	if(typeOfYear == 'lemur'){
+		startDates	<- paste(years, "-07-01", sep = '')
+		endDates	<- paste(years+1, "-06-30", sep = '')
+	}
+	#print(startDates)
+	for(i in 1:length(startDates)){
+		treeMatAll		<- sleepTreeNet(data = sleepDataSubset, begin = startDates[i], end = endDates[i], dawn_dusk = "dawn_dusk",  date_format = "%Y-%m-%d")
+		treeNetAll		<- graph_from_adjacency_matrix(treeMatAll$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
+		sleepNets[[i]]	<- treeNetAll
+	}
+	return(sleepNets)
+}
+		
+sleepNetsII <- yearlySleepNets(sleep, 'calendar', 'II', 2011:2019)
+
+reshapeYearlyNets	<- function(nets){
+	allVertices	<- unique(names(unlist(lapply(nets, V))))
+	for(i in 1:length(nets)){
+		newMat	<- matrix(, length(allVertices), length(allVertices), dimnames = list(allVertices, allVertices))
+		oldMat	<- as.matrix(as_adjacency_matrix(nets[[i]], attr = "weight"))
+		oldVertices	<- V(nets[[i]])$name
+		#print(oldVertices)
+		for(j in oldVertices){
+			for(k in oldVertices){
+				newMat[rownames(newMat) == j, colnames(newMat) == k]	<- oldMat[rownames(oldMat) == j, colnames(oldMat) == k]
+			}
+		}
+		#print(newMat)
+		newMat[is.na(newMat)] <- 0
+		#print(newMat)
+		nets[[i]]	<- graph_from_adjacency_matrix(newMat, weighted = TRUE, diag = FALSE, mode = 'undirected')
+		V(nets[[i]])$present	<- rep(NA, length(allVertices))
+		V(nets[[i]])$present	<- allVertices %in% oldVertices
+		#print(V(nets[[i]])$present)
+		V(nets[[i]])$sex		<- c(rep('male', 4), rep('female', 5), 'unknown', rep('female', 1), rep('male', 2), rep('female', 2), rep('male', 4), 'unknown')
+		V(nets[[i]])$vertexColor	<- ifelse(V(nets[[i]])$sex == 'female', 'lightgoldenrod1', ifelse(V(nets[[i]])$sex == 'male', 'midnightblue', 'black'))
+		V(nets[[i]])[V(nets[[i]])$present == FALSE]$vertexColor	<- NA
+		#print(V(nets[[i]])$vertexColor)
+	}
+	return(nets)
+}
+
+sleepNetsIIReShape	<- reshapeYearlyNets(sleepNetsII)
+lay	<- layout.fruchterman.reingold(sleepNetsIIReShape[[1]])
+
+png('groupIICalendarYearSleepNets.png', width = 10, height = 10, units = 'in', res = 300)
+par(mfrow = c(3, 3), mar = c(0, 0, 0, 0))
+for(m in 1:length(sleepNetsIIReShape)){
+	#print(V(sleepNetsIIReShape[[m]])$vertexColor)
+	vertexLabelColor	<- gsub('black', 'white', V(sleepNetsIIReShape[[m]])$vertexColor)
+	vertexLabelColor	<- gsub('lightgoldenrod1', 'black', vertexLabelColor)
+	vertexLabelColor	<- gsub('midnightblue', 'white', vertexLabelColor)
+	#print(vertexLabelColor)
+	vertexLabel	<- c()
+	for(k in 1:20){
+		vertexLabel[k]		<- ifelse(V(sleepNetsIIReShape[[m]])$present[k] == TRUE, V(sleepNetsIIReShape[[m]])$name[k], '')
+	}
+
+	#Plot edges first, then nodes
+	#print(vertexLabelColor)
+	plot.igraph(sleepNetsIIReShape[[m]], edge.width = E(sleepNetsIIReShape[[m]])$weight*3, vertex.size = 25, layout = lay, vertex.label = vertexLabel, vertex.frame.color = V(sleepNetsIIReShape[[m]])$vertexColor, vertex.label.color = vertexLabelColor, vertex.color = V(sleepNetsIIReShape[[m]])$vertexColor)
+
+}
+dev.off()
 
 #######################################
 ### Manipulating instantaneous data ###
