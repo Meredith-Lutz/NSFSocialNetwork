@@ -1,7 +1,11 @@
-##################################################################
-##### Sifaka Research Project Observation Time Calculations ######
-#####    Last updated by ML 11.16.21   ###########################
-##################################################################
+#############################################################
+#############################################################
+##### Sifaka Research Project Observation Time Formulas #####
+##### 		Last updated by ML 11.16.21	        #####
+#############################################################
+#############################################################
+
+#Examples on how to use are in the how to use file - you shouldn't need to change anything here
 
 calculateObservationMatrix	<- function(focalList, groupsFile, startDate, endDate, animals){
 	#focalList is a dataframe of focals of the SRP format with columns "date", "focal_animal", "number_scans"
@@ -49,8 +53,6 @@ calculateObservationMatrix	<- function(focalList, groupsFile, startDate, endDate
 	return(obsMat)
 }
 
-calculateObservationMatrix(fullFocalList, groups, '2008-01-01', '2020-12-31', sifakaNames)
-
 calculateObservationTimes	<- function(focalList, startDate, endDate, animals){
 	#focalList is a dataframe of focals of the SRP format with columns "date", "focal_animal", "number_scans"
 	#startDate is the first date you'll like to use in your analysis in yyyy-mm-dd format
@@ -68,4 +70,5 @@ calculateObservationTimes	<- function(focalList, startDate, endDate, animals){
 	return(nScans)
 }
 
+calculateObservationMatrix(fullFocalList, groups, '2008-01-01', '2020-12-31', sifakaNames)
 calculateObservationTimes(fullFocalList, '2008-01-01', '2020-12-31', sifakaNames)
