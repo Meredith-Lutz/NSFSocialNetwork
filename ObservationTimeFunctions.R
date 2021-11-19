@@ -70,5 +70,5 @@ calculateObservationTimes	<- function(focalList, startDate, endDate, animals){
 	return(nScans)
 }
 
-calculateObservationMatrix(fullFocalList, groups, '2008-01-01', '2020-12-31', sifakaNames)
-calculateObservationTimes(fullFocalList, '2008-01-01', '2020-12-31', sifakaNames)
+#calculateObservationMatrix(fullFocalList, groups, '2008-01-01', '2020-12-31', sifakaNames)
+#calculateObservationTimes(fullFocalList, '2008-01-01', '2020-12-31', sifakaNames)
