@@ -5,8 +5,13 @@
 #################################################################
 #################################################################
 
-#Set your working directory to whereever you have the ObservationTimeFunctions.R file saved
+#Read in data - list of focals and groups file
 setwd('G:/My Drive/Graduate School/Research/Projects/KMNPLongTermData/NSF Analyses')
+groups		<- read.csv('Compiled Group File with some data deleted for BL analysis_Nov 3 2021_ML Corrected11Nov2021.csv')
+focalListActv	<- read.csv('FocalActivityIDs_TMM_ML_11Nov2021.csv')
+
+#Set your working directory to whereever you have the ObservationTimeFunctions.R file saved
+setwd('G:/My Drive/Graduate School/Research/Projects/KMNPLongTermData/NSF Analyses/NSFSocialNetwork')
 
 #Let R read in the functions
 source('ObservationTimeFunctions.R')
@@ -19,7 +24,7 @@ sifakaNames	<- c('Abby', 'William', 'Zipper', 'Ana', 'Walrus', 'Aristotle')
 #See functions for full details on the structure of files, but fullFocalList and groups should be of the standard SRP format
 #fullFocalList needs "date", "focal_animal", and "number_scans"
 #groups needs "date", "group", and "animal"
-calculateObservationMatrix(fullFocalList, groups, '2008-01-01', '2020-12-31', sifakaNames)
+obsMat	<- calculateObservationMatrix(focalListActv, groups, '2008-01-01', '2020-12-31', sifakaNames)
 
 #Example calculation for normal times per individual
-calculateObservationTimes(fullFocalList, '2008-01-01', '2020-12-31', sifakaNames)
+calculateObservationTimes(focalListActv, '2008-01-01', '2020-12-31', sifakaNames)
