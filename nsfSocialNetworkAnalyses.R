@@ -8,26 +8,21 @@ library(reshape2)
 library(chron)
 
 # Set working directory
-#setwd('G:/My Drive/Graduate School/Research/Projects/KMNPLongTermData/NSF Analyses')
-setwd('C:/Users/cecil/OneDrive/Desktop/SDC Work')
+setwd('G:/My Drive/Graduate School/Research/Projects/KMNPLongTermData/NSF Analyses')
+#setwd('C:/Users/cecil/OneDrive/Desktop/SDC Work')
+
+source('G:/My Drive/Graduate School/Research/Projects/KMNPLongTermData/NSF Analyses/NSFSocialNetwork/ObservationTimeFunctions.R')
 
 # Read in data
-socialDataRaw		<- read.csv('All_nonSuppStudent_Social_Data_through_2019_2021_07_09_ML_BL edits for NSFanalysis_Francis duplicates deleted_Jul262021_MLEdits.csv', stringsAsFactors = FALSE)
+socialDataRaw		<- read.csv('socialDataFinalForBLAnalysis2021-12-13.csv', stringsAsFactors = FALSE)
 matingSeasonStudent 	<- read.csv('studentMatingSeason_BL updates Jul232021_MLEdits.csv', stringsAsFactors = FALSE)
 
 sleep				<- read.csv('All_Sleep_Tree_Data_Feb2020_corrected BL Sept2_2021_ML.csv', stringsAsFactors = FALSE)
 
-laura				<- read.csv('Master file of Laura focal activity data.csv', stringsAsFactors = FALSE)
-nn				<- read.csv('NearestNeighbor_TMM_ML_11Oct2021.csv', stringsAsFactors = FALSE)
-focalActivity		<- read.csv('FocalActivity_TMM_ML_11Oct2021.csv', stringsAsFactors = FALSE)
-filemaker			<- read.csv('FileMaker_ML_11Oct2021.csv', stringsAsFactors = FALSE)
-
 census			<- read.csv('Census_File_Aug25_2020_chest status updated Dec10_2020.csv', stringsAsFactors = FALSE)
-groups			<- read.csv('Compiled Group File with some data deleted for BL analysis_Nov 3 2021_ML Corrected.csv', stringsAsFactors = FALSE)
+groups			<- read.csv('Compiled Group File with some data deleted for BL analysis_Nov 3 2021_ML Corrected11Nov2021.csv', stringsAsFactors = FALSE)
 
-nnFocalList			<- read.csv('NearestNeighborIDs_TMM_ML_11Oct2021.csv', stringsAsFactors = FALSE)
-actvFocalList		<- read.csv('FocalActivityIDs_TMM_ML_11Oct2021.csv', stringsAsFactors = FALSE)
-fmFocalList			<- read.csv('FileMakerIDs_ML_11Oct2021.csv', stringsAsFactors = FALSE)
+focalList			<- read.csv('focalListFinalForBLAnalysis2021-12-13.csv', stringsAsFactors = FALSE)
 
 demo				<- read.csv('Copy of life.history.TMM with becca comments about conflicting info Feb10_2021_ML.csv', stringsAsFactors = FALSE)
 
@@ -40,12 +35,12 @@ matingSeasonStudent$StudentOb.YN	<- 'Y'
 matingSeasonStudentSimp	<- matingSeasonStudent[,c('OriginalFile', 'Observer', 'Observation.ID', 'Date', 'Focal',
 					'Start', 'Stop', 'Duration', 'Duration.Seconds', 'Initiator', 'Receiver', 'Context',
 					'Behavior', 'Species', 'Tree.number', 'Response', 'Response.to', 'Win', 'Comments',
-					'Cleaning.changes', 'StudentOb.YN')]
+					'Cleaning.changes', 'StudentOb.YN', 'focalID')]
 socialDataRawSimp		<- socialDataRaw[,c('OriginalFile', 'Observer', 'Obs.ID', 'Date', 'Focal', 'Start', 'Stop',
 					'Duration', 'Duration.Seconds', 'Initiator', 'Receiver', 'Context', 'Behavior', 'Species',
-					'Tree.number', 'Response', 'To', 'Win', 'Comments', 'Cleaning.Comments', 'StudentOb.YN')]
+					'Tree.number', 'Response', 'To', 'Win', 'Comments', 'Cleaning.Comments', 'StudentOb.YN', 'focalID')]
 colnames(socialDataRawSimp)	<- colnames(matingSeasonStudentSimp)
-socialDataAllRaw		<- rbind(socialDataRawSimp, matingSeasonStudentSimp)
+socialDataAllRaw			<- socialDataRawSimp #rbind(socialDataRawSimp, matingSeasonStudentSimp)
 
 # Change baby names to match LH file
 socialDataAllRaw$Initiator	<- gsub('Vanilla_baby_2011', 'Vanillababy2011', socialDataAllRaw$Initiator)
@@ -53,7 +48,7 @@ socialDataAllRaw$Initiator	<- gsub('Savannah_baby_2011', 'Savannahbaby2011', soc
 socialDataAllRaw$Receiver	<- gsub('Vanilla_baby_2011', 'Vanillababy2011', socialDataAllRaw$Receiver)
 socialDataAllRaw$Receiver	<- gsub('Savannah_baby_2011', 'Savannahbaby2011', socialDataAllRaw$Receiver)
 
-# Remove lines that have non-identified individuals, n=667 removed, n=137769 left
+# Remove lines that have non-identified individuals, n=602 removed, n=115965 left
 socialData		<- socialDataAllRaw[socialDataAllRaw$Initiator %in% sifakaNames & socialDataAllRaw$Receiver %in% sifakaNames,]
 socialDataRemoved	<- socialDataAllRaw[!(socialDataAllRaw$Initiator %in% sifakaNames & socialDataAllRaw$Receiver %in% sifakaNames),]
 
@@ -61,21 +56,21 @@ socialDataRemoved	<- socialDataAllRaw[!(socialDataAllRaw$Initiator %in% sifakaNa
 ### Create focal list for filemaker data ###
 ############################################
 filemakerFocalList	<- data.frame()
-groupsToAddToFilemaker  <- groups[,1:3]
-filemakerWithRealGroup	<- merge(filemaker,groupsToAddToFilemaker,by.x = c('Focal','Date'),by.y = c('animal','date'))
-colnames(filemakerWithRealGroup)[23]	<- 'realGroup'
+#groupsToAddToFilemaker  <- groups[,1:3]
+#filemakerWithRealGroup	<- merge(filemaker,groupsToAddToFilemaker,by.x = c('Focal','Date'),by.y = c('animal','date'))
+#colnames(filemakerWithRealGroup)[23]	<- 'realGroup'
 
-for(i in unique(filemakerWithRealGroup$ObsID)){
-	subset	<- filemakerWithRealGroup[filemakerWithRealGroup$ObsID == i & is.na(filemakerWithRealGroup$ObsID)==FALSE,]
+for(i in unique(filemaker$ObsID)){
+	subset	<- filemaker[filemaker$ObsID == i & is.na(filemaker$ObsID)==FALSE,]
 	observer	<- unique(subset$Observer)
       group       <- unique(subset$realGroup)
       date        <- unique(subset$Date)
       focal	      <- unique(subset$Focal)
       nScan		<- length(unique(subset$ScanTime))
-      stopTime	<- max(unique(subset$ScanTime))
-      scanTime	<- min(unique(subset$ScanTime))
-	startTime	<- format(as.POSIXlt(scanTime, format = "%H:%M:%S")- 10*60,"%H:%M:%S")
-	newline	<- cbind.data.frame(i,observer,date,group,focal,startTime,stopTime,nScan)
+      lastScan	<- max(unique(format(as.POSIXlt(subset$ScanTime, format = "%H:%M:%S"), "%H:%M:%S")))
+      firstScan	<- min(unique(format(as.POSIXlt(subset$ScanTime, format = "%H:%M:%S"), "%H:%M:%S")))
+	startTime	<- format(as.POSIXlt(firstScan, format = "%H:%M:%S")- 10*60,"%H:%M:%S")
+	newline	<- cbind.data.frame(i,observer,date,group,focal,startTime,lastScan,nScan)
 	filemakerFocalList	<- rbind.data.frame(filemakerFocalList,newline)
       
 }
@@ -83,55 +78,22 @@ for(i in unique(filemakerWithRealGroup$ObsID)){
 colnames(filemakerFocalList)	<- colnames(nnFocalList)
 
 #write.csv(filemakerWithRealGroup[,c(1:8, 23, 10:22)], 'FileMaker_ML_11Oct2021.csv', row.names = FALSE)
-#write.csv(filemakerFocalList, 'FileMakerIDs_ML_11Oct2021.csv', row.names = FALSE)
+#write.csv(filemakerFocalList, 'FileMakerIDs_ML_06Dec2021.csv', row.names = FALSE)
 
 ######################################################
 ### Combine Focal Lists and Create Observation MAT ###
 ######################################################
-fullFocalList	<- rbind.data.frame(fmFocalList, nnFocalList, actvFocalList, stringsAsFactors = FALSE)
 fullFocalList	<- fullFocalList[order(fullFocalList$date, fullFocalList$start_time),]
+months		<- data.frame(str_split_fixed(as.character(fullFocalList$yearMonth), '-', n = 2))
+fullFocalList$month	<- as.numeric(months[,2])
+fullFocalList$season	<- ifelse(fullFocalList$month ==  1 | fullFocalList$month == 2 | fullFocalList$month == 3 , 'mating',
+				ifelse(fullFocalList$month == 7 | fullFocalList$month == 8 | fullFocalList$month == 9, 'birthing', 'other'))
 
-calculateObservationMatrix	<- function(focalList, groupsFile, startDate, endDate, animals){
-	focalListDateSubset	<- focalList[as.Date(focalList$date) >= as.Date(startDate) & as.Date(focalList$date) <= endDate,]
-	focalListSubset		<- focalListDateSubset[focalListDateSubset$focal_animal %in% animals,]
-	
-	obsMat		<- 0*as.matrix(table(animals)%*%t(table(animals)))
-	
-	uniqueDays		<- unique(groupsFile$date)
-	for(i in uniqueDays){
-		print(paste("Starting Day", i))
-		groupsObserved	<- unique(groupsFile[groupsFile$date == i, "group"])
-		#print(groupsObserved)
-     		for(j in groupsObserved){
-			finalSubset	<- focalListSubset[focalListSubset$date ==  i & focalListSubset$group == j,]
-			#print(paste(j, "Has", dim(subsetFocalList)[1], "Focals on", i))
-			if(dim(finalSubset)[1] == 0){
-				next
-			}
-			animalsPresent	<- groupsFile[groupsFile$date == i & groupsFile$group == j, "animal"]
-			for(k in animalsPresent){
- 				for(m in animalsPresent){
-					focals	<- finalSubset[finalSubset$focal_animal == k | finalSubset$focal_animal == m, ]
-					obsTime	<- 10*sum(focals$number_scans,na.rm = TRUE)
-					obsMat[rownames(obsMat) == k, colnames(obsMat) == m]	<- obsTime + obsMat[rownames(obsMat) == k, colnames(obsMat) == m]
-					obsMat[rownames(obsMat) == m, colnames(obsMat) == k]	<- obsTime + obsMat[rownames(obsMat) == m, colnames(obsMat) == k]
-				}
-			}
-		}
-	}
-	return(obsMat)
-}
+focalListMating		<- fullFocalList[fullFocalList$season == 'mating',]
+focalListNonMating	<- fullFocalList[fullFocalList$season == 'birthing' | fullFocalList$season == 'other',]
+focalListBirthing		<- fullFocalList[fullFocalList$season == 'birthing',]
 
-calculateObservationMatrix(fullFocalList, groups, '2008-01-01', '2020-12-31', sifakaNames)
-
-calculateObservationTimes	<- function(focalList, startDate, endDate, animals){
-	focalListDateSubset	<- focalList[as.Date(focalList$date) >= as.Date(startDate) & as.Date(focalList$date) <= endDate,]
-	focalListSubset		<- focalListDateSubset[focalListDateSubset$focal_animal %in% animals,]
-	nScans			<- aggregate(focalListSubset$number_scans, by = list(focalListSubset$focal_animal), FUN = sum)
-	colnames(nScans)		<- c('focal_animal', 'number_scans')
-	nScans$nMin			<- nScans$number_scans * 10
-	return(nScans)
-}
+obsMat	<- calculateObservationMatrix(focalListBirthing, groups, '2008-01-01', '2020-12-31', sifakaNames)
 
 calculateObservationTimes(fullFocalList, '2008-01-01', '2020-12-31', sifakaNames)
 
@@ -154,32 +116,44 @@ socialData$behavCat	<- ifelse(socialData$Behavior == 'Approach_contact' | social
 						socialData$Behavior == 'Nose_jab' | socialData$Behavior == 'Snap_at' |
 						socialData$Behavior == 'Feign_to_cuff', 'agg', NA)))))))))))
 
+dates	<- data.frame(str_split_fixed(as.character(socialData$Date), '/', n = 3))
+socialData$month	<- as.numeric(dates[,1])
+socialData$season	<- ifelse(socialData$month ==  1 | socialData$month == 2 | socialData$month == 3 , 'mating',
+				ifelse(socialData$month == 7 | socialData$month == 8 | socialData$month == 9, 'birthing', 'other'))
+
+socialDataMating		<- socialData[socialData$season == 'mating',]
+socialDataNonMating	<- socialData[socialData$season == 'birthing' | socialData$season == 'other',]
+socialDataBirthing	<- socialData[socialData$season == 'birthing',]
+
+#Change this line to run on diff dataset
+socialDataFinal	<- socialDataBirthing
+
 #Create mutual grooming that is in both directions
-mgrm			<- socialData[socialData$Behavior == 'Mutual_groom' | socialData$Behavior == 'Mutual Groom [unknown initiator]',]
-mgrmExtraLines	<- mgrm[,c(1:9, 11, 10, 12:22)]
+mgrm			<- socialDataFinal[socialDataFinal$Behavior == 'Mutual_groom' | socialDataFinal$Behavior == 'Mutual Groom [unknown initiator]',]
+mgrmExtraLines	<- mgrm[,c(1:9, 11, 10, 12:25)]
 mgrmExtraLines$Behavior	<- 'Mutual_groom_added'
 colnames(mgrmExtraLines)	<- colnames(mgrm)
 allMgrm		<- rbind(mgrm, mgrmExtraLines)
 
-cntND			<- socialData[socialData$Behavior == 'Approach_contact' | socialData$Behavior == 'Contact_out_of_sight',]
-cntD			<- socialData[socialData$Behavior == 'Approach_contact',]
-prxND			<- socialData[socialData$Behavior == 'Approach_1m' | socialData$Behavior == 'Within_1m' | 
-				socialData$Behavior == 'Withdraw_within_1m' | socialData$Behavior == 'Withdraw_within_1m_out_of_sight',]
-prxD			<- socialData[socialData$Behavior == 'Approach_1m',]
-grmD			<- socialData[socialData$Behavior == 'Groom',]
-playND		<- socialData[socialData$Behavior == 'Play' | socialData$Behavior == 'Play_out_of_sight',]
-chatterD		<- socialData[socialData$Behavior == 'Chatter',]
-grmND			<- rbind(grmD, allMgrm, socialData[socialData$Behavior == 'Groom_out_of_sight',])
-itgD			<- socialData[socialData$Behavior == 'Invite_to_groom',]
-supplant		<- socialData[socialData$Behavior == 'Supplant',]
-aggNoSupplant	<- socialData[socialData$Behavior == 'Lunge' | socialData$Behavior == 'Cuff' |
-				socialData$Behavior == 'Bite' | socialData$Behavior == 'Chase' | socialData$Behavior == 'Nose_jab' |
-				socialData$Behavior == 'Feign_to_cuff' | socialData$Behavior == 'Snap_at',]
-appD			<- socialData[socialData$Behavior == 'Approach_contact' | socialData$Behavior == 'Approach_1m',]
-withD			<- socialData[socialData$Behavior == 'Withdraw_greater_than_1m',]
-with1mD		<- socialData[socialData$Behavior == 'Withdraw_within_1m',]
-tcD			<- socialData[socialData$Behavior == 'Tail_curl',]
-fleeD			<- socialData[socialData$Behavior == 'Flee_less_than_2m' | socialData$Behavior == 'Flee_greater_than_2m',]
+cntND			<- socialDataFinal[socialDataFinal$Behavior == 'Approach_contact' | socialDataFinal$Behavior == 'Contact_out_of_sight',]
+cntD			<- socialDataFinal[socialDataFinal$Behavior == 'Approach_contact',]
+prxND			<- socialDataFinal[socialDataFinal$Behavior == 'Approach_1m' | socialDataFinal$Behavior == 'Within_1m' | 
+				socialDataFinal$Behavior == 'Withdraw_within_1m' | socialDataFinal$Behavior == 'Withdraw_within_1m_out_of_sight',]
+prxD			<- socialDataFinal[socialDataFinal$Behavior == 'Approach_1m',]
+grmD			<- socialDataFinal[socialDataFinal$Behavior == 'Groom',]
+playND		<- socialDataFinal[socialDataFinal$Behavior == 'Play' | socialDataFinal$Behavior == 'Play_out_of_sight',]
+chatterD		<- socialDataFinal[socialDataFinal$Behavior == 'Chatter',]
+grmND			<- rbind(grmD, allMgrm, socialDataFinal[socialDataFinal$Behavior == 'Groom_out_of_sight',])
+itgD			<- socialDataFinal[socialDataFinal$Behavior == 'Invite_to_groom',]
+supplant		<- socialDataFinal[socialDataFinal$Behavior == 'Supplant',]
+aggNoSupplant	<- socialDataFinal[socialDataFinal$Behavior == 'Lunge' | socialDataFinal$Behavior == 'Cuff' |
+				socialDataFinal$Behavior == 'Bite' | socialDataFinal$Behavior == 'Chase' | socialDataFinal$Behavior == 'Nose_jab' |
+				socialDataFinal$Behavior == 'Feign_to_cuff' | socialDataFinal$Behavior == 'Snap_at',]
+appD			<- socialDataFinal[socialDataFinal$Behavior == 'Approach_contact' | socialDataFinal$Behavior == 'Approach_1m',]
+withD			<- socialDataFinal[socialDataFinal$Behavior == 'Withdraw_greater_than_1m',]
+with1mD		<- socialDataFinal[socialDataFinal$Behavior == 'Withdraw_within_1m',]
+tcD			<- socialDataFinal[socialDataFinal$Behavior == 'Tail_curl',]
+fleeD			<- socialDataFinal[socialDataFinal$Behavior == 'Flee_less_than_2m' | socialDataFinal$Behavior == 'Flee_greater_than_2m',]
 allPrxND		<- rbind(cntND, prxND)
 
 ####################################################
@@ -190,33 +164,9 @@ allPrxND		<- rbind(cntND, prxND)
 # time (or # of times) that a dyad interacts. The multiple behavior option averages across behaviors, which is
 # not the goal, here, hence we will create a dummy behavioral category variable that lumps all of the relevant behaviors for a net
 # There is more documentation for the function itself in the definition file
-#source('G:/My Drive/Graduate School/Research/Projects/TemporalNets/SeasonalNetworkAnalyses/createNetworkFunction.R')
-source('C:/Users/cecil/OneDrive/Desktop/SDC Work/Github Work/SeasonalNetworkAnalyses/createNetworkFunction.R')
+source('G:/My Drive/Graduate School/Research/Projects/TemporalNets/SeasonalNetworkAnalyses/createNetworkFunction.R')
+#source('C:/Users/cecil/OneDrive/Desktop/SDC Work/Github Work/SeasonalNetworkAnalyses/createNetworkFunction.R')
 
-playNDMat	<- createNet(playND$Initiator, playND$Receiver, playND$behavCat, 'ply',
-			subjects = sifakaNames, directional = FALSE, type = 'duration', durs = playND$Duration.Seconds)
-grmDMat	<- createNet(grmD$Initiator, grmD$Receiver, grmD$behavCat, 'grm',
-			subjects = sifakaNames, directional = TRUE, type = 'duration', durs = grmD$Duration.Seconds)
-tcDMat	<- createNet(tcD$Initiator, tcD$Receiver, tcD$behavCat, 'tc',
-			subjects = sifakaNames, directional = TRUE, type = 'duration', durs = tcD$Duration.Seconds)
-tcDFreqMat	<- createNet(tcD$Initiator, tcD$Receiver, tcD$behavCat, 'tc',
-			subjects = sifakaNames, directional = TRUE, type = 'count')
-fleeDMat	<- createNet(fleeD$Initiator, fleeD$Receiver, fleeD$behavCat, 'flee',
-			subjects = sifakaNames, directional = TRUE, type = 'count')
-grmDFreqMat	<- createNet(grmD$Initiator, grmD$Receiver, grmD$behavCat, 'grm',
-			subjects = sifakaNames, directional = TRUE, type = 'count')
-grmNDMat	<- createNet(grmND$Initiator, grmND$Receiver, grmND$behavCat, 'grm',
-			subjects = sifakaNames, directional = FALSE, type = 'duration', durs = grmND$Duration.Seconds)
-grmNDFreqMat	<- createNet(grmND$Initiator, grmND$Receiver, grmND$behavCat, 'grm',
-			subjects = sifakaNames, directional = FALSE, type = 'count')
-chatDMat	<- createNet(chatterD$Initiator, chatterD$Receiver, chatterD$behavCat, 'chat',
-			subjects = sifakaNames, directional = TRUE, type = 'count')
-itgDMat	<- createNet(itgD$Initiator, itgD$Receiver, itgD$behavCat, 'itg',
-			subjects = sifakaNames, directional = TRUE, type = 'count')
-suppDMat	<- createNet(supplant$Initiator, supplant$Receiver, supplant$behavCat, 'supp',
-			subjects = sifakaNames, directional = TRUE, type = 'count')
-aggDMat	<- createNet(aggNoSupplant$Initiator, aggNoSupplant$Receiver, aggNoSupplant$behavCat, 'agg',
-			subjects = sifakaNames, directional = TRUE, type = 'count')
 appDMat	<- createNet(appD$Initiator, appD$Receiver, appD$behavCat, 'prx',
 			subjects = sifakaNames, directional = TRUE, type = 'count')
 cntDMat	<- createNet(cntD$Initiator, cntD$Receiver, cntD$behavCat, 'prx',
@@ -225,20 +175,88 @@ withDMat	<- createNet(withD$Initiator, withD$Receiver, withD$behavCat, 'with',
 			subjects = sifakaNames, directional = TRUE, type = 'count')
 with1mDMat	<- createNet(with1mD$Initiator, with1mD$Receiver, with1mD$behavCat, 'prx',
 			subjects = sifakaNames, directional = TRUE, type = 'count')
-cntNDMat	<- createNet(cntND$Initiator, cntND$Receiver, cntND$behavCat, 'prx',
-			subjects = sifakaNames, directional = FALSE, type = 'duration', durs = cntND$Duration.Seconds)
 allprxNDMat	<- createNet(allPrxND$Initiator, allPrxND$Receiver, allPrxND$behavCat, 'prx',
 			subjects = sifakaNames, directional = FALSE, type = 'duration', durs = allPrxND$Duration.Seconds)
+cntNDMat	<- createNet(cntND$Initiator, cntND$Receiver, cntND$behavCat, 'prx',
+			subjects = sifakaNames, directional = FALSE, type = 'duration', durs = cntND$Duration.Seconds)
 
-cntNDNet		<- graph_from_adjacency_matrix(cntNDMat, mode = 'lower', weighted = TRUE)
-cntDNet		<- graph_from_adjacency_matrix(cntDMat, mode = 'directed', weighted = TRUE)
-prxNDNet		<- graph_from_adjacency_matrix(prxNDMat, mode = 'undirected', weighted = TRUE)
-prxDNet		<- graph_from_adjacency_matrix(prxDMat, mode = 'directed', weighted = TRUE)
-grmNDNet		<- graph_from_adjacency_matrix(grmNDMat, mode = 'undirected', weighted = TRUE)
-grmDNet		<- graph_from_adjacency_matrix(grmDMat, mode = 'directed', weighted = TRUE)
-itgDNet		<- graph_from_adjacency_matrix(itgDMat, mode = 'directed', weighted = TRUE)
-suppDNet		<- graph_from_adjacency_matrix(suppDMat, mode = 'directed', weighted = TRUE)
-aggDNet		<- graph_from_adjacency_matrix(aggDMat, mode = 'directed', weighted = TRUE)
+grmDMat	<- createNet(grmD$Initiator, grmD$Receiver, grmD$behavCat, 'grm',
+			subjects = sifakaNames, directional = TRUE, type = 'duration', durs = grmD$Duration.Seconds)
+grmDFreqMat	<- createNet(grmD$Initiator, grmD$Receiver, grmD$behavCat, 'grm',
+			subjects = sifakaNames, directional = TRUE, type = 'count')
+grmNDMat	<- createNet(grmND$Initiator, grmND$Receiver, grmND$behavCat, 'grm',
+			subjects = sifakaNames, directional = FALSE, type = 'duration', durs = grmND$Duration.Seconds)
+grmNDFreqMat	<- createNet(grmND$Initiator, grmND$Receiver, grmND$behavCat, 'grm',
+			subjects = sifakaNames, directional = FALSE, type = 'count')
+itgDMat	<- createNet(itgD$Initiator, itgD$Receiver, itgD$behavCat, 'itg',
+			subjects = sifakaNames, directional = TRUE, type = 'count')
+playNDMat	<- createNet(playND$Initiator, playND$Receiver, playND$behavCat, 'ply',
+			subjects = sifakaNames, directional = FALSE, type = 'duration', durs = playND$Duration.Seconds)
+
+chatDMat	<- createNet(chatterD$Initiator, chatterD$Receiver, chatterD$behavCat, 'chat',
+			subjects = sifakaNames, directional = TRUE, type = 'count')
+fleeDMat	<- createNet(fleeD$Initiator, fleeD$Receiver, fleeD$behavCat, 'flee',
+			subjects = sifakaNames, directional = TRUE, type = 'count')
+tcDMat	<- createNet(tcD$Initiator, tcD$Receiver, tcD$behavCat, 'tc',
+			subjects = sifakaNames, directional = TRUE, type = 'duration', durs = tcD$Duration.Seconds)
+tcDFreqMat	<- createNet(tcD$Initiator, tcD$Receiver, tcD$behavCat, 'tc',
+			subjects = sifakaNames, directional = TRUE, type = 'count')
+aggDMat	<- createNet(aggNoSupplant$Initiator, aggNoSupplant$Receiver, aggNoSupplant$behavCat, 'agg',
+			subjects = sifakaNames, directional = TRUE, type = 'count')
+suppDMat	<- createNet(supplant$Initiator, supplant$Receiver, supplant$behavCat, 'supp',
+			subjects = sifakaNames, directional = TRUE, type = 'count')
+
+matList	<- list(appDMat, cntDMat, withDMat, with1mDMat, allprxNDMat, cntNDMat,
+				grmDMat, grmDFreqMat, grmNDMat, grmNDFreqMat, itgDMat, playNDMat,
+				chatDMat, fleeDMat, tcDMat, tcDFreqMat, aggDMat, suppDMat)
+matListAdj	<- list()
+for(i in 1:length(matList)){
+	matAdj	<- matList[[i]]/(obsMat/60)
+	matAdj[is.nan(matAdj)]	<- 0
+	matListAdj[[i]]	<- matAdj
+}
+
+appDNet		<- graph_from_adjacency_matrix(matListAdj[[1]], mode = 'directed', weighted = TRUE)
+cntDNet		<- graph_from_adjacency_matrix(matListAdj[[2]], mode = 'directed', weighted = TRUE)
+withDNet		<- graph_from_adjacency_matrix(matListAdj[[3]], mode = 'directed', weighted = TRUE)
+with1mDNet		<- graph_from_adjacency_matrix(matListAdj[[4]], mode = 'directed', weighted = TRUE)
+allprxNDNet		<- graph_from_adjacency_matrix(matListAdj[[5]], mode = 'undirected', weighted = TRUE)
+cntNDNet		<- graph_from_adjacency_matrix(matListAdj[[6]], mode = 'undirected', weighted = TRUE)
+
+grmDNet		<- graph_from_adjacency_matrix(matListAdj[[7]], mode = 'directed', weighted = TRUE)
+grmDFreqNet		<- graph_from_adjacency_matrix(matListAdj[[8]], mode = 'directed', weighted = TRUE)
+grmNDNet		<- graph_from_adjacency_matrix(matListAdj[[9]], mode = 'undirected', weighted = TRUE)
+grmNDFreqNet	<- graph_from_adjacency_matrix(matListAdj[[10]], mode = 'undirected', weighted = TRUE)
+itgDNet		<- graph_from_adjacency_matrix(matListAdj[[11]], mode = 'directed', weighted = TRUE)
+playNDNet		<- graph_from_adjacency_matrix(matListAdj[[12]], mode = 'undirected', weighted = TRUE)
+
+chatDNet		<- graph_from_adjacency_matrix(matListAdj[[13]], mode = 'directed', weighted = TRUE)
+fleeDNet		<- graph_from_adjacency_matrix(matListAdj[[14]], mode = 'directed', weighted = TRUE)
+tcDNet		<- graph_from_adjacency_matrix(matListAdj[[15]], mode = 'directed', weighted = TRUE)
+tcDFreqNet		<- graph_from_adjacency_matrix(matListAdj[[16]], mode = 'directed', weighted = TRUE)
+aggDNet		<- graph_from_adjacency_matrix(matListAdj[[17]], mode = 'directed', weighted = TRUE)
+suppDNet		<- graph_from_adjacency_matrix(matListAdj[[18]], mode = 'directed', weighted = TRUE)
+
+
+write.csv(matListAdj[[1]], 'allApproachFreqBirthing.csv')
+write.csv(matListAdj[[2]], 'approachContactFreqBirthing.csv')
+write.csv(matListAdj[[3]], 'withdrawG1FreqBirthing.csv')
+write.csv(matListAdj[[4]], 'withdrawWithin1mFreqBirthing.csv')
+write.csv(matListAdj[[5]], 'timeSpentIn1mDurBirthing.csv')
+write.csv(matListAdj[[6]], 'timeSpentInContactDurBirthing.csv')
+write.csv(matListAdj[[7]], 'groomDirectionalDurBirthing.csv')
+write.csv(matListAdj[[8]], 'groomDirectionalFreqBirthing.csv')
+write.csv(matListAdj[[9]], 'groomNonDirectionalDurBirthing.csv')
+write.csv(matListAdj[[10]], 'groomNonDirectionalFreqBirthing.csv')
+write.csv(matListAdj[[11]], 'inviteToGroomFreqBirthing.csv')
+write.csv(matListAdj[[12]], 'playDurBirthing.csv')
+write.csv(matListAdj[[13]], 'chatterFreqBirthing.csv')
+write.csv(matListAdj[[14]], 'fleeFreqBirthing.csv')
+write.csv(matListAdj[[15]], 'tailCurlDurBirthing.csv')
+write.csv(matListAdj[[16]], 'tailCurlFreqBirthing.csv')
+write.csv(matListAdj[[17]], 'aggressionFreqBirthing.csv')
+write.csv(matListAdj[[18]], 'supplantFreqBirthing.csv')
+
 
 #########################################
 ##### Sleeping network calculations #####
@@ -410,10 +428,14 @@ sleep			<- sleep[sleep$ID %in% sifakaNames,]
 sleep		<- sleep[sleep$Individual.Repeat != 'Y',]
 sleep		<- sleep[sleep$Observation.Duplicated == '' | (sleep$Observation.Duplicated == 'Y' & sleep$Observer == sleep$Observer.Kept),]
 
+#Remove a few problematic lines from the merge
+sleep		<- sleep[!(sleep$Date == '2019-09-23' & sleep$ID == 'Zavona' & sleep$group == 'III'),]
+sleep		<- sleep[!(sleep$Date == '2019-08-11' & sleep$ID == 'Spirit' & sleep$group == 'II'),]
+sleep		<- sleep[!(sleep$Date == '2019-02-04' & sleep$ID == 'Spirit' & sleep$group == 'XI'),]
+
 ###############################
 ### Seasonal sleep analyses ###
 ###############################
-
 #Seperate out datasets
 sleepMatingSeason		<- sleep[sleep$season == 'mating',]
 sleepNonMatingSeason	<- sleep[sleep$season == 'birthing' | sleep$season == 'other',]
@@ -480,17 +502,81 @@ write.csv(treeMatAMBirthing$adjacency.matrix, 'sleepTreeAMOnlyBirthing.csv')
 write.csv(ballMatAMSleepBirthing$adjacency.matrix, 'sleepBallAMOnlyStillSleepBirthing.csv')
 write.csv(treeMatAMSleepBirthing$adjacency.matrix, 'sleepTreeAMOnlyStillSleepBirthing.csv')
 
-########################################
-### Initial plots for sleep networks ###
-########################################
-
-## All Time
+######################
+### Get edge lists ###
+######################
 ballNetAll		<- graph_from_adjacency_matrix(ballMatAll$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
 treeNetAll		<- graph_from_adjacency_matrix(treeMatAll$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
 ballNetAM		<- graph_from_adjacency_matrix(ballMatAM$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
 treeNetAM		<- graph_from_adjacency_matrix(treeMatAM$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
 ballNetAMSleep	<- graph_from_adjacency_matrix(ballMatAMSleep$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
 treeNetAMSleep	<- graph_from_adjacency_matrix(treeMatAMSleep$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
+
+ballNetAllMating		<- graph_from_adjacency_matrix(ballMatAllMating$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
+treeNetAllMating		<- graph_from_adjacency_matrix(treeMatAllMating$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
+ballNetAMMating		<- graph_from_adjacency_matrix(ballMatAMMating$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
+treeNetAMMating		<- graph_from_adjacency_matrix(treeMatAMMating$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
+ballNetAMSleepMating	<- graph_from_adjacency_matrix(ballMatAMSleepMating$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
+treeNetAMSleepMating	<- graph_from_adjacency_matrix(treeMatAMSleepMating$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
+
+ballNetAllNonMating	<- graph_from_adjacency_matrix(ballMatAllNonMating$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
+treeNetAllNonMating	<- graph_from_adjacency_matrix(treeMatAllNonMating$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
+ballNetAMNonMating	<- graph_from_adjacency_matrix(ballMatAMNonMating$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
+treeNetAMNonMating	<- graph_from_adjacency_matrix(treeMatAMNonMating$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
+ballNetAMSleepNonMating	<- graph_from_adjacency_matrix(ballMatAMSleepNonMating$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
+treeNetAMSleepNonMating	<- graph_from_adjacency_matrix(treeMatAMSleepNonMating$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
+
+ballNetAllBirthing	<- graph_from_adjacency_matrix(ballMatAllBirthing$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
+treeNetAllBirthing	<- graph_from_adjacency_matrix(treeMatAllBirthing$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
+ballNetAMBirthing		<- graph_from_adjacency_matrix(ballMatAMBirthing$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
+treeNetAMBirthing		<- graph_from_adjacency_matrix(treeMatAMBirthing$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
+ballNetAMSleepBirthing	<- graph_from_adjacency_matrix(ballMatAMSleepBirthing$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
+treeNetAMSleepBirthing	<- graph_from_adjacency_matrix(treeMatAMSleepBirthing$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
+
+allNets	<- list(appDNet, cntDNet, withDNet, with1mDNet, allprxNDNet, cntNDNet,
+				grmDNet, grmDFreqNet, grmNDNet, grmNDFreqNet, itgDNet, playNDNet,
+				chatDNet, fleeDNet, tcDNet, tcDFreqNet, aggDNet, suppDNet,
+				ballNetAllBirthing, treeNetAllBirthing, ballNetAMBirthing, treeNetAMBirthing, ballNetAMSleepBirthing, treeNetAMSleepBirthing)
+edgeListAllNets	<- lapply(allNets, FUN = get.data.frame)
+
+edgeListAllNetsDF	<- merge(edgeListAllNets[[1]], edgeListAllNets[[2]], all.x = TRUE, all.y = TRUE, by.x = c('from', 'to'), by.y = c('from', 'to'))
+edgeListAllNetsDF	<- merge(edgeListAllNetsDF, edgeListAllNets[[3]], all.x = TRUE, all.y = TRUE, by.x = c('from', 'to'), by.y = c('from', 'to'))
+edgeListAllNetsDF	<- merge(edgeListAllNetsDF, edgeListAllNets[[4]], all.x = TRUE, all.y = TRUE, by.x = c('from', 'to'), by.y = c('from', 'to'))
+edgeListAllNetsDF	<- merge(edgeListAllNetsDF, edgeListAllNets[[5]], all.x = TRUE, all.y = TRUE, by.x = c('from', 'to'), by.y = c('from', 'to'))
+edgeListAllNetsDF	<- merge(edgeListAllNetsDF, edgeListAllNets[[6]], all.x = TRUE, all.y = TRUE, by.x = c('from', 'to'), by.y = c('from', 'to'))
+edgeListAllNetsDF	<- merge(edgeListAllNetsDF, edgeListAllNets[[7]], all.x = TRUE, all.y = TRUE, by.x = c('from', 'to'), by.y = c('from', 'to'))
+edgeListAllNetsDF	<- merge(edgeListAllNetsDF, edgeListAllNets[[8]], all.x = TRUE, all.y = TRUE, by.x = c('from', 'to'), by.y = c('from', 'to'))
+edgeListAllNetsDF	<- merge(edgeListAllNetsDF, edgeListAllNets[[9]], all.x = TRUE, all.y = TRUE, by.x = c('from', 'to'), by.y = c('from', 'to'))
+edgeListAllNetsDF	<- merge(edgeListAllNetsDF, edgeListAllNets[[10]], all.x = TRUE, all.y = TRUE, by.x = c('from', 'to'), by.y = c('from', 'to'))
+edgeListAllNetsDF	<- merge(edgeListAllNetsDF, edgeListAllNets[[11]], all.x = TRUE, all.y = TRUE, by.x = c('from', 'to'), by.y = c('from', 'to'))
+edgeListAllNetsDF	<- merge(edgeListAllNetsDF, edgeListAllNets[[12]], all.x = TRUE, all.y = TRUE, by.x = c('from', 'to'), by.y = c('from', 'to'))
+edgeListAllNetsDF	<- merge(edgeListAllNetsDF, edgeListAllNets[[13]], all.x = TRUE, all.y = TRUE, by.x = c('from', 'to'), by.y = c('from', 'to'))
+edgeListAllNetsDF	<- merge(edgeListAllNetsDF, edgeListAllNets[[14]], all.x = TRUE, all.y = TRUE, by.x = c('from', 'to'), by.y = c('from', 'to'))
+edgeListAllNetsDF	<- merge(edgeListAllNetsDF, edgeListAllNets[[15]], all.x = TRUE, all.y = TRUE, by.x = c('from', 'to'), by.y = c('from', 'to'))
+edgeListAllNetsDF	<- merge(edgeListAllNetsDF, edgeListAllNets[[16]], all.x = TRUE, all.y = TRUE, by.x = c('from', 'to'), by.y = c('from', 'to'))
+edgeListAllNetsDF	<- merge(edgeListAllNetsDF, edgeListAllNets[[17]], all.x = TRUE, all.y = TRUE, by.x = c('from', 'to'), by.y = c('from', 'to'))
+edgeListAllNetsDF	<- merge(edgeListAllNetsDF, edgeListAllNets[[18]], all.x = TRUE, all.y = TRUE, by.x = c('from', 'to'), by.y = c('from', 'to'))
+edgeListAllNetsDF	<- merge(edgeListAllNetsDF, edgeListAllNets[[19]], all.x = TRUE, all.y = TRUE, by.x = c('from', 'to'), by.y = c('from', 'to'))
+edgeListAllNetsDF	<- merge(edgeListAllNetsDF, edgeListAllNets[[20]], all.x = TRUE, all.y = TRUE, by.x = c('from', 'to'), by.y = c('from', 'to'))
+edgeListAllNetsDF	<- merge(edgeListAllNetsDF, edgeListAllNets[[21]], all.x = TRUE, all.y = TRUE, by.x = c('from', 'to'), by.y = c('from', 'to'))
+edgeListAllNetsDF	<- merge(edgeListAllNetsDF, edgeListAllNets[[22]], all.x = TRUE, all.y = TRUE, by.x = c('from', 'to'), by.y = c('from', 'to'))
+edgeListAllNetsDF	<- merge(edgeListAllNetsDF, edgeListAllNets[[23]], all.x = TRUE, all.y = TRUE, by.x = c('from', 'to'), by.y = c('from', 'to'))
+edgeListAllNetsDF	<- merge(edgeListAllNetsDF, edgeListAllNets[[24]], all.x = TRUE, all.y = TRUE, by.x = c('from', 'to'), by.y = c('from', 'to'))
+colnames(edgeListAllNetsDF)	<- c('from', 'to', 'allApproachFreq', 'approachContactFreq', 'withdrawG1Freq',
+						'withdrawWithin1mFreq', 'timeSpentIn1mDur', 'timeSpentInContactDur',
+						'groomDirectionalDur', 'groomDirectionalFreq', 'groomNonDirectionalDur',
+						'groomNonDirectionalFreq', 'inviteToGroomFreq', 'playDur', 'chatterFreq',
+						'fleeFreq', 'tailCurlDur', 'tailCurlFreq', 'aggressionFreq', 'supplantFreq',
+						'sleepBall', 'sleepTree', 'sleepBallAM', 'sleepTreeAM', 'sleepBallAMStillSleeping',
+						'sleepTreeAMStillSleeping')
+
+write.csv(edgeListAllNetsDF, 'edgeListAllNetsBirthing.csv', row.names = FALSE)
+
+########################################
+### Initial plots for sleep networks ###
+########################################
+
+## All Time
 
 allSleepNets	<- list(ballNetAll, treeNetAll, ballNetAM, treeNetAM, ballNetAMSleep, treeNetAMSleep)
 edgeListSleepList	<- lapply(allSleepNets, FUN = get.data.frame)
@@ -528,12 +614,6 @@ boxplot(treeAMSleep ~ sexCombination, data = edgeListSleepDF, main = 'Sleep Tree
 dev.off()
 
 ## Mating season
-ballNetAllMating		<- graph_from_adjacency_matrix(ballMatAllMating$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
-treeNetAllMating		<- graph_from_adjacency_matrix(treeMatAllMating$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
-ballNetAMMating		<- graph_from_adjacency_matrix(ballMatAMMating$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
-treeNetAMMating		<- graph_from_adjacency_matrix(treeMatAMMating$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
-ballNetAMSleepMating	<- graph_from_adjacency_matrix(ballMatAMSleepMating$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
-treeNetAMSleepMating	<- graph_from_adjacency_matrix(treeMatAMSleepMating$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
 
 allSleepNetsMating	<- list(ballNetAllMating, treeNetAllMating, ballNetAMMating, treeNetAMMating, ballNetAMSleepMating, treeNetAMSleepMating)
 edgeListSleepListMating	<- lapply(allSleepNetsMating, FUN = get.data.frame)
@@ -571,12 +651,6 @@ boxplot(treeAMSleep ~ sexCombination, data = edgeListSleepDFMating, main = 'Slee
 dev.off()
 
 ## Non-Mating season
-ballNetAllNonMating	<- graph_from_adjacency_matrix(ballMatAllNonMating$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
-treeNetAllNonMating	<- graph_from_adjacency_matrix(treeMatAllNonMating$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
-ballNetAMNonMating	<- graph_from_adjacency_matrix(ballMatAMNonMating$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
-treeNetAMNonMating	<- graph_from_adjacency_matrix(treeMatAMNonMating$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
-ballNetAMSleepNonMating	<- graph_from_adjacency_matrix(ballMatAMSleepNonMating$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
-treeNetAMSleepNonMating	<- graph_from_adjacency_matrix(treeMatAMSleepNonMating$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
 
 allSleepNetsNonMating	<- list(ballNetAllNonMating, treeNetAllNonMating, ballNetAMNonMating, treeNetAMNonMating, ballNetAMSleepNonMating, treeNetAMSleepNonMating)
 edgeListSleepListNonMating	<- lapply(allSleepNetsNonMating, FUN = get.data.frame)
@@ -614,12 +688,6 @@ boxplot(treeAMSleep ~ sexCombination, data = edgeListSleepDFNonMating, main = 'S
 dev.off()
 
 ## Birthing season
-ballNetAllBirthing	<- graph_from_adjacency_matrix(ballMatAllBirthing$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
-treeNetAllBirthing	<- graph_from_adjacency_matrix(treeMatAllBirthing$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
-ballNetAMBirthing		<- graph_from_adjacency_matrix(ballMatAMBirthing$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
-treeNetAMBirthing		<- graph_from_adjacency_matrix(treeMatAMBirthing$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
-ballNetAMSleepBirthing	<- graph_from_adjacency_matrix(ballMatAMSleepBirthing$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
-treeNetAMSleepBirthing	<- graph_from_adjacency_matrix(treeMatAMSleepBirthing$adjacency.matrix, weighted = TRUE, diag = FALSE, mode = 'undirected')
 
 allSleepNetsBirthing		<- list(ballNetAllBirthing, treeNetAllBirthing, ballNetAMBirthing, treeNetAMBirthing, ballNetAMSleepBirthing, treeNetAMSleepBirthing)
 edgeListSleepListBirthing	<- lapply(allSleepNetsBirthing, FUN = get.data.frame)
@@ -929,12 +997,3 @@ colnames(centralityDF)	<- c('Name', 'cntEigen', 'cntBetween', 'cntStrength', 'pr
 				'prxStrength', 'prxCntEigen', 'prxCntBetween', 'prxCntStrength')
 
 centralityDF	<- merge(centralityDF, demo[,c('Name', 'Sex')], all.x = TRUE, by.x = 'Name', by.y = 'Name')
-
-#####################################
-### Examining different datasets ####
-#####################################
-francis		<- nn[nn$Observer == 'Francis',]
-francisSocial	<- socialDataRaw[socialDataRaw$Observer == 'Francis',]
-
-daniel		<- nn[nn$Observer == 'Daniel',]
-danielSocial	<- socialDataRaw[socialDataRaw$Observer == 'Daniel',]
