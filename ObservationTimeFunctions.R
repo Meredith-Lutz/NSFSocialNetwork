@@ -1,7 +1,7 @@
 #############################################################
 #############################################################
 ##### Sifaka Research Project Observation Time Formulas #####
-##### 		Last updated by ML 11.16.21	        #####
+##### 		Last updated by ML 3.21.22	        #####
 #############################################################
 #############################################################
 
@@ -21,7 +21,7 @@ calculateObservationMatrix	<- function(focalList, groupsFile, startDate, endDate
 	#Initialize observation matrix
 	obsMat		<- 0*as.matrix(table(animals)%*%t(table(animals)))
 	
-	uniqueDays		<- unique(groupsFile$date)
+	uniqueDays		<- unique(focalListSubset$date)
 		
 	#Calculate observation matrix for each day and then sum up across days 
 	for(i in uniqueDays){
