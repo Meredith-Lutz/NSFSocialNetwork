@@ -9,12 +9,10 @@ library(chron)
 
 # Set working directory
 setwd('G:/My Drive/Graduate School/Research/Projects/KMNPLongTermData/NSF Analyses')
-#setwd('C:/Users/cecil/OneDrive/Desktop/SDC Work')
-
 source('G:/My Drive/Graduate School/Research/Projects/KMNPLongTermData/NSF Analyses/NSFSocialNetwork/ObservationTimeFunctions.R')
 
 # Read in data
-socialDataRaw		<- read.csv('socialDataFinalForBLAnalysis2021-12-13.csv', stringsAsFactors = FALSE)
+socialDataRaw		<- read.csv('All_nonSuppStudent_Social_Data_through_2019_2022_06_09_ML.csv', stringsAsFactors = FALSE)
 matingSeasonStudent 	<- read.csv('studentMatingSeason_BL updates Jul232021_MLEdits.csv', stringsAsFactors = FALSE)
 
 sleep				<- read.csv('All_Sleep_Tree_Data_Feb2020_corrected BL Sept2_2021_ML.csv', stringsAsFactors = FALSE)
@@ -35,10 +33,10 @@ matingSeasonStudent$StudentOb.YN	<- 'Y'
 matingSeasonStudentSimp	<- matingSeasonStudent[,c('OriginalFile', 'Observer', 'Observation.ID', 'Date', 'Focal',
 					'Start', 'Stop', 'Duration', 'Duration.Seconds', 'Initiator', 'Receiver', 'Context',
 					'Behavior', 'Species', 'Tree.number', 'Response', 'Response.to', 'Win', 'Comments',
-					'Cleaning.changes', 'StudentOb.YN', 'focalID')]
+					'Cleaning.changes', 'StudentOb.YN')]
 socialDataRawSimp		<- socialDataRaw[,c('OriginalFile', 'Observer', 'Obs.ID', 'Date', 'Focal', 'Start', 'Stop',
 					'Duration', 'Duration.Seconds', 'Initiator', 'Receiver', 'Context', 'Behavior', 'Species',
-					'Tree.number', 'Response', 'To', 'Win', 'Comments', 'Cleaning.Comments', 'StudentOb.YN', 'focalID')]
+					'Tree.number', 'Response', 'To', 'Win', 'Comments', 'Cleaning.Comments', 'StudentOb.YN')]
 colnames(socialDataRawSimp)	<- colnames(matingSeasonStudentSimp)
 socialDataAllRaw			<- socialDataRawSimp #rbind(socialDataRawSimp, matingSeasonStudentSimp)
 
@@ -48,9 +46,15 @@ socialDataAllRaw$Initiator	<- gsub('Savannah_baby_2011', 'Savannahbaby2011', soc
 socialDataAllRaw$Receiver	<- gsub('Vanilla_baby_2011', 'Vanillababy2011', socialDataAllRaw$Receiver)
 socialDataAllRaw$Receiver	<- gsub('Savannah_baby_2011', 'Savannahbaby2011', socialDataAllRaw$Receiver)
 
-# Remove lines that have non-identified individuals, n=602 removed, n=115965 left
+# Remove lines that have non-identified individuals, n=643 removed, n=125658 left
 socialData		<- socialDataAllRaw[socialDataAllRaw$Initiator %in% sifakaNames & socialDataAllRaw$Receiver %in% sifakaNames,]
 socialDataRemoved	<- socialDataAllRaw[!(socialDataAllRaw$Initiator %in% sifakaNames & socialDataAllRaw$Receiver %in% sifakaNames),]
+
+# Focals by date
+focalByDate		<- table(socialData$Observation.ID, socialData$Date)
+focalByDate1s	<- focalByDate * (1/focalByDate)
+nDatesPerFocal	<- apply(focalByDate1s, 1, sum, na.rm = TRUE)
+length(nDatesPerFocal[nDatesPerFocal > 1]) #1 with multiple dates for a focal
 
 ############################################
 ### Create focal list for filemaker data ###
