@@ -14,14 +14,10 @@ source('G:/My Drive/Graduate School/Research/Projects/KMNPLongTermData/NSF Analy
 # Read in data
 socialDataRaw		<- read.csv('All_nonSuppStudent_Social_Data_through_2019_2022_06_09_ML.csv', stringsAsFactors = FALSE)
 matingSeasonStudent 	<- read.csv('studentMatingSeason_BL updates Jul232021_MLEdits.csv', stringsAsFactors = FALSE)
-
 sleep				<- read.csv('All_Sleep_Tree_Data_Feb2020_corrected BL Sept2_2021_ML.csv', stringsAsFactors = FALSE)
-
 census			<- read.csv('Census_File_Aug25_2020_chest status updated Dec10_2020.csv', stringsAsFactors = FALSE)
-groups			<- read.csv('Compiled Group File with some data deleted for BL analysis_Nov 3 2021_ML Corrected11Nov2021.csv', stringsAsFactors = FALSE)
-
+groups			<- read.csv('Compiled Group File with some data deleted for BL analysis_Nov 3 2021_ML Corrected11Nov2021_NoBlanks.csv', stringsAsFactors = FALSE)
 focalList			<- read.csv('focalListFinalForBLAnalysis2021-12-13.csv', stringsAsFactors = FALSE)
-
 demo				<- read.csv('Copy of life.history.TMM with becca comments about conflicting info Feb10_2021_ML.csv', stringsAsFactors = FALSE)
 
 demo$Name			<- str_to_title(demo$Name, locale = "en")
