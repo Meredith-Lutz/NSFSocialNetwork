@@ -11,7 +11,7 @@ library(lubridate)
 
 setwd('G:/My Drive/Graduate School/Research/Projects/KMNPLongTermData/NSF Analyses')
 
-socialDataRaw		<- read.csv('All_nonSuppStudent_Social_Data_through_2019_2022_06_09_ML.csv', stringsAsFactors = FALSE)
+socialDataRaw		<- read.csv('G:/My Drive/Graduate School/Research/Projects/KMNPLongTermData/NSF Analyses/Old data files/All_nonSuppStudent_Social_Data_through_2019_2022_06_09_ML.csv', stringsAsFactors = FALSE)
 groups			<- read.csv('Compiled Group File with some data deleted for BL analysis_Nov 3 2021_ML Corrected11Nov2021_NoBlanks.csv', stringsAsFactors = FALSE)
 nnFocalList			<- read.csv('NearestNeighborIDs_TMM_ML_01Dec2021.csv', stringsAsFactors = FALSE)
 actvFocalList		<- read.csv('FocalActivityIDs_TMM_ML_01Dec2021.csv', stringsAsFactors = FALSE)
@@ -48,6 +48,8 @@ socialDataAllRaw$Receiver	<- gsub('Savannah_baby_2011', 'Savannahbaby2011', soci
 socialData		<- socialDataAllRaw[socialDataAllRaw$Initiator %in% sifakaNames & socialDataAllRaw$Receiver %in% sifakaNames,]
 socialDataRemoved	<- socialDataAllRaw[!(socialDataAllRaw$Initiator %in% sifakaNames & socialDataAllRaw$Receiver %in% sifakaNames),]
 
+# For Becca
+socialData	<- socialDataAllRaw
 ##############################
 ### Visits versus in group ###
 ##############################
@@ -166,7 +168,7 @@ socialData$Stop	<- format(socialData$Stop, format = '%H:%M:%S')
 
 socialData	<- socialData[order(socialData$Observer, socialData$Date, socialData$Start, socialData$Stop),]
 
-write.csv(socialData[,c(1:48, 50)], "allSocialDataWithFocalIDs2022-06-13.csv", row.names = FALSE)
+write.csv(socialData, "allSocialDataWithFocalIDs2022-07-04.csv", row.names = FALSE)
 
 ##############################################
 ### Identify Which Focals Need Social Data ###

@@ -25,7 +25,7 @@ calculateObservationMatrix	<- function(focalList, groupsFile, startDate, endDate
 		
 	#Calculate observation matrix for each day and then sum up across days 
 	for(i in uniqueDays){
-		print(paste("Starting Day", i))
+		#print(paste("Starting Day", i))
 		groupsObserved	<- unique(groupsFile[groupsFile$date == i, "group"])
 		#print(groupsObserved)
 		
