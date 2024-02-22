@@ -5,8 +5,8 @@
 rm(list=ls())
 options(stringsAsFactors = F)
 #setwd("C:/Users/tmontgomery/Dropbox/MPI/SifakaData")
-setwd("~/Dropbox/MPI/SifakaData")
-setwd('G:/My Drive/Graduate School/Research/Projects/KMNPLongTermData/NSF Analyses')
+#setwd("~/Dropbox/MPI/SifakaData")
+setwd('C:/Users/mclutz/Box/GoogleDriveBackup/Graduate School/Research/Projects/KMNPLongTermData/NSF Analyses')
 
 library("here")
 library("tidyverse")
